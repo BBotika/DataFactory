@@ -1,0 +1,113 @@
+{
+	"name": "map_rapp5d_dupl",
+	"properties": {
+		"folder": {
+			"name": "BERAGADT_FL"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "TEST__ADF__RAW_PP_5MIN_DATA_KW",
+						"type": "DatasetReference"
+					},
+					"name": "RAWPP5MINDATAKW"
+				},
+				{
+					"dataset": {
+						"referenceName": "ROUND_UTC_START_DATETIME_V",
+						"type": "DatasetReference"
+					},
+					"name": "ROUNDUTCSTARTDATETIMEV"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "TEST__ADF__DT_PP_5MIN",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "filter1"
+				},
+				{
+					"name": "aggregate1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "join1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          UTCStartDateTime as timestamp,",
+				"          Device_ID as integer,",
+				"          Plant_ID as integer,",
+				"          MSRMNT_Value as float,",
+				"          UOM_Orig_ID as integer,",
+				"          UOM_New_ID as integer,",
+				"          Equipment_ID as integer,",
+				"          composite_flag as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> RAWPP5MINDATAKW",
+				"source(output(",
+				"          UTCStartDateTime as timestamp,",
+				"          orig as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> ROUNDUTCSTARTDATETIMEV",
+				"RAWPP5MINDATAKW filter((Plant_ID != 5) && (Device_ID != 42)) ~> filter1",
+				"derivedColumn1 aggregate(groupBy(ROUNDUTCSTARTDATETIMEV@UTCStartDateTime,",
+				"          Device_ID,",
+				"          CalcOrMeasured_ID,",
+				"          Equipment_ID,",
+				"          composite_flag,",
+				"          UOM_New_ID,",
+				"          UOM_Orig_ID,",
+				"          Plant_ID),",
+				"     AVG_MSRMNT_Value = avg(MSRMNT_Value)) ~> aggregate1",
+				"join1 derive(CalcOrMeasured_ID = iif( isNull(MSRMNT_Value) , 1, 0)) ~> derivedColumn1",
+				"filter1, ROUNDUTCSTARTDATETIMEV join(RAWPP5MINDATAKW@UTCStartDateTime == orig,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"aggregate1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          UTCStartDateTime as timestamp,",
+				"          PP_RAW_DEVMSRMNT_ID as integer,",
+				"          PP_RAW_Plant_ID as integer,",
+				"          PP_RAW_FieldName_ID as string,",
+				"          Device_ID as integer,",
+				"          Plant_ID as integer,",
+				"          UOM_Orig_ID as integer,",
+				"          UOM_New_ID as integer,",
+				"          Equipment_ID as integer,",
+				"          composite_flag as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}

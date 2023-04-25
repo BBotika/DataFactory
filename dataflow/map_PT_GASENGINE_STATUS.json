@@ -1,0 +1,191 @@
+{
+	"name": "map_PT_GASENGINE_STATUS",
+	"properties": {
+		"folder": {
+			"name": "GAS_ENGINE"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ARTEMIS_DB__DBO__PP_RAW_5MIN_AGGR",
+						"type": "DatasetReference"
+					},
+					"name": "ARTEMISDBPPRAW5MINAGGR"
+				},
+				{
+					"dataset": {
+						"referenceName": "REP_DB__ASZK_X__DEVICE_LIST",
+						"type": "DatasetReference"
+					},
+					"name": "REPDBASZKXDEVICELIST"
+				},
+				{
+					"dataset": {
+						"referenceName": "REP_DB_ASZK_GASEINGINE_CONFIG",
+						"type": "DatasetReference"
+					},
+					"name": "CONF"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "REPDB_ASZK_PT_GASENGINE_STATUS",
+						"type": "DatasetReference"
+					},
+					"name": "PTGASENGINESTATUS"
+				}
+			],
+			"transformations": [
+				{
+					"name": "JDEVICELIST"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "FDEVICELIST"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "filter1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          PLANT_id as integer,",
+				"          DEVMSRMNT_id as integer,",
+				"          UTCLogDateTime as timestamp,",
+				"          value01 as float,",
+				"          value02 as float,",
+				"          value03 as float,",
+				"          value04 as float,",
+				"          value05 as float,",
+				"          value06 as float,",
+				"          value07 as float,",
+				"          value08 as float,",
+				"          value09 as float,",
+				"          value10 as float,",
+				"          value11 as float,",
+				"          value12 as float,",
+				"          value13 as float,",
+				"          value14 as float,",
+				"          value15 as float,",
+				"          value16 as float,",
+				"          SP_debug as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n     *\\nFROM\\n     ARTEMIS_DB.DBO.PP_RAW_5MIN_AGGR T\\nWHERE\\n     T.UTCLOGDATETIME >= DATEADD(DAY,-10,GETUTCDATE())\\n',",
+				"     format: 'query') ~> ARTEMISDBPPRAW5MINAGGR",
+				"source(output(",
+				"          Device_ID as integer,",
+				"          PP_RAW_Plant_ID as integer,",
+				"          PP_RAW_DEVMSRMNT_ID as integer,",
+				"          PP_RAW_FieldName_ID as string,",
+				"          Device_Name as string,",
+				"          Device_Name_BI as string,",
+				"          KKS_ID as string,",
+				"          Equipment_ID as integer,",
+				"          DeviceType_ID as integer,",
+				"          Technology_ID as integer,",
+				"          Plant_ID as integer,",
+				"          DevLevel_ID as integer,",
+				"          UOM_Orig_ID as integer,",
+				"          UOM_New_ID as integer,",
+				"          Datapoint_ID as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> REPDBASZKXDEVICELIST",
+				"source(output(",
+				"          PLANT_ID as integer,",
+				"          STATUS_ID as integer,",
+				"          GASMOTOR_ID as integer,",
+				"          TYPE as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> CONF",
+				"filter1, FDEVICELIST join(ARTEMISDBPPRAW5MINAGGR@PLANT_id == PP_RAW_Plant_ID",
+				"     && DEVMSRMNT_id == PP_RAW_DEVMSRMNT_ID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JDEVICELIST",
+				"JDEVICELIST select(mapColumn(",
+				"          PLANT_id = ARTEMISDBPPRAW5MINAGGR@PLANT_id,",
+				"          DEVMSRMNT_id,",
+				"          UTC_LOG_DATETIME = UTCLogDateTime,",
+				"          F_STARTING = value01,",
+				"          F_STARTABLE = value02,",
+				"          F_RUNNING = value03,",
+				"          F_STOPPABLE = value05,",
+				"          F_STOPPING = value06,",
+				"          F_STOPPED = value07,",
+				"          F_FAULT = value09,",
+				"          F_LOCAL_CONTROL = value10,",
+				"          F_REMOTE_CONTROL = value11,",
+				"          EQUIPMENT_ID = Equipment_ID,",
+				"          GASMOTOR_ID",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"REPDBASZKXDEVICELIST filter(!isNull(PP_RAW_DEVMSRMNT_ID) && !isNull(PP_RAW_Plant_ID)) ~> FDEVICELIST",
+				"ARTEMISDBPPRAW5MINAGGR, CONF join(ARTEMISDBPPRAW5MINAGGR@PLANT_id == CONF@PLANT_ID",
+				"     && DEVMSRMNT_id == STATUS_ID,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 filter(UTCLogDateTime >= addDays(currentUTC(), -3)) ~> filter1",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          UTC_LOG_DATETIME as timestamp,",
+				"          F_STARTING as float,",
+				"          F_STARTABLE as float,",
+				"          F_RUNNING as float,",
+				"          F_STOPPABLE as float,",
+				"          F_STOPPING as float,",
+				"          F_STOPPED as float,",
+				"          F_FAULT as float,",
+				"          F_REMOTE_CONTROL as float,",
+				"          F_LOCAL_CONTROL as float,",
+				"          GAS_ENGINE_ID as integer,",
+				"          PLANT_ID as integer,",
+				"          EQUIPMENT_ID as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          UTC_LOG_DATETIME,",
+				"          F_STARTING,",
+				"          F_STARTABLE,",
+				"          F_RUNNING,",
+				"          F_STOPPABLE,",
+				"          F_STOPPING,",
+				"          F_STOPPED,",
+				"          F_FAULT,",
+				"          F_REMOTE_CONTROL,",
+				"          F_LOCAL_CONTROL,",
+				"          GAS_ENGINE_ID = GASMOTOR_ID,",
+				"          PLANT_ID = PLANT_id,",
+				"          EQUIPMENT_ID",
+				"     )) ~> PTGASENGINESTATUS"
+			]
+		}
+	}
+}

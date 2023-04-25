@@ -1,0 +1,63 @@
+{
+	"name": "FORE_QH",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Artemis01_prod",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "UTC_START_DATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "UTC_MODEL_QUERY_DATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "UTC_QUERY_DATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "MODEL_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "DATA_TYPE_DICT_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "DIM_DATA_TYPE_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "LOCATION_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "LEAD_TIME_QH",
+				"type": "tinyint",
+				"precision": 3
+			},
+			{
+				"name": "FORECASTED_VALUE",
+				"type": "real",
+				"precision": 7
+			}
+		],
+		"typeProperties": {
+			"schema": "DM",
+			"table": "AF_FORE_QH"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

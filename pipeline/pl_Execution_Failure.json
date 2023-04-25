@@ -1,0 +1,25 @@
+{
+	"name": "pl_Execution_Failure",
+	"properties": {
+		"activities": [
+			{
+				"name": "Set variable1",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_state",
+					"value": "'Failed'"
+				}
+			}
+		],
+		"variables": {
+			"v_state": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-11-28T08:49:23Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

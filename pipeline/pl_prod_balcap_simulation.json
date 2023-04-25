@@ -1,0 +1,773 @@
+{
+	"name": "pl_prod_balcap_simulation",
+	"properties": {
+		"activities": [
+			{
+				"name": "get vm status",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "was azure function successful",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.SubscriptionId,'/resourceGroups/',pipeline().parameters.ResourceGroupName,'/providers/Microsoft.Compute/virtualMachines/',pipeline().parameters.VMName,'/InstanceView?api-version=2022-11-01') \n",
+						"type": "Expression"
+					},
+					"method": "GET",
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://management.azure.com"
+					}
+				}
+			},
+			{
+				"name": "Is vm deallocated",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "get vm status",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@and(equals(activity('get vm status').output.statuses[1].displayStatus,'VM deallocated'), equals(pipeline().parameters.CommandStart,'Start'))",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "VM is already allocated",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": "Something went wrong, vm is already allocated.",
+								"errorCode": "VM allocated"
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Start vm",
+							"type": "WebActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.SubscriptionId,'/resourceGroups/',pipeline().parameters.ResourceGroupName,'/providers/Microsoft.Compute/virtualMachines/',pipeline().parameters.VMName,'/',pipeline().parameters.CommandStart,'?api-version=2022-11-01') \n",
+									"type": "Expression"
+								},
+								"method": "POST",
+								"body": {
+									"name": "vm-balcap"
+								},
+								"authentication": {
+									"type": "MSI",
+									"resource": "https://management.azure.com/"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "pl_Execution_Success",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "If dataset refrehs failed",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Success",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Get daily market monthly prices",
+				"type": "AzureFunctionActivity",
+				"dependsOn": [
+					{
+						"activity": "Set current day",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"functionName": "monthly_prices_gen",
+					"method": "GET"
+				},
+				"linkedServiceName": {
+					"referenceName": "market_monthly_prices",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Until VM is allocated",
+				"type": "Until",
+				"dependsOn": [
+					{
+						"activity": "Is vm can be available",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@contains(string(activity('get vm status until').output),\n    string('\"VM deallocated\"'))\n",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "get vm status until",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "Wait 10 min",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.SubscriptionId,'/resourceGroups/',pipeline().parameters.ResourceGroupName,'/providers/Microsoft.Compute/virtualMachines/',pipeline().parameters.VMName,'/InstanceView?api-version=2022-11-01') \n",
+									"type": "Expression"
+								},
+								"method": "GET",
+								"authentication": {
+									"type": "MSI",
+									"resource": "https://management.azure.com"
+								}
+							}
+						},
+						{
+							"name": "Wait 10 min",
+							"type": "Wait",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": 600
+							}
+						},
+						{
+							"name": "Wait 10 sec",
+							"type": "Wait",
+							"dependsOn": [
+								{
+									"activity": "get vm status until",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": 10
+							}
+						}
+					],
+					"timeout": "1.12:00:00"
+				}
+			},
+			{
+				"name": "pl_Execution_Failure",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Error message",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Failure",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "was azure function successful",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Get daily market monthly prices",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(activity('Get daily market monthly prices').output.Response,'OK')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Azure function failed",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": "Daily market monthly prices query failed",
+								"errorCode": "Daily market monthly prices query failed"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Get status of last trading day runtime",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Until VM is allocated",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": {
+							"value": "SELECT TOP (1) \n   [UTCStartDay]\n  ,[UTCStartDateTime]\n  ,[UTCEndDateTime]\n  ,[Status_ID]\n  ,[ElapsedTime_s]\n  ,[Procedure_ID]\n  ,[ResultComment]\n  ,[RunSource]\nFROM\n  [REP_DB].[zzz].[LOGs]\nwhere \n  Procedure_ID = 368 and\n  UTCStartDay = '@{variables('curr_day')}'\norder by UTCEndDateTime DESC",
+							"type": "Expression"
+						},
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "artemis_rep_db_zzz_logs",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Is last trading day runtime success",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Get status of last trading day runtime",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(int(activity('Get status of last trading day runtime').output.firstRow.Status_ID),1)",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "It was failed",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": "The last runtime was failed.",
+								"errorCode": "The last runtime was failed."
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "GET WorkspaceID",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Is last trading day runtime success",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat(\n'https://api.powerbi.com/v1.0/myorg/groups?$filter=name%20eq%20''',\npipeline().parameters.WorkspaceName,'''')",
+						"type": "Expression"
+					},
+					"method": "GET",
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://analysis.windows.net/powerbi/api"
+					}
+				}
+			},
+			{
+				"name": "Get All Datasets",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "GET WorkspaceID",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://api.powerbi.com/v1.0/myorg/groups/',\nactivity('GET WorkspaceID').output.value[0].id,\n'/datasets')",
+						"type": "Expression"
+					},
+					"method": "GET",
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://analysis.windows.net/powerbi/api"
+					}
+				}
+			},
+			{
+				"name": "Filter DatasetName",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "Get All Datasets",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get All Datasets').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@equals(item().name,pipeline().parameters.DatasetName)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Call Dataset Refresh",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Filter DatasetName",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat(\n    'https://api.powerbi.com/v1.0/myorg/groups/'\n    , activity('GET WorkspaceID').output.value[0].id\n    , '/datasets/'\n    , activity('Filter DatasetName').output.value[0].id\n    , '/refreshes'\n    )",
+						"type": "Expression"
+					},
+					"method": "POST",
+					"body": {
+						"notifyOption": "NoNotification"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://analysis.windows.net/powerbi/api"
+					}
+				}
+			},
+			{
+				"name": "Until dataset refresh completion",
+				"type": "Until",
+				"dependsOn": [
+					{
+						"activity": "Call Dataset Refresh",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@not(\n    equals(\n        first(\n            json(\n                string(\n                    activity('Get dataset refresh status').output\n                )\n            ).value\n        ).status,'Unknown'\n    )\n)",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Get dataset refresh status",
+							"type": "WebActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "@concat(\n    'https://api.powerbi.com/v1.0/myorg/groups/'\n    ,activity('GET WorkspaceID').output.value[0].id\n    ,'/datasets/'\n    ,activity('Filter DatasetName').output.value[0].id\n    ,'/refreshes?$top=1'\n    )",
+									"type": "Expression"
+								},
+								"method": "GET",
+								"headers": {
+									"Content-Type": "application/json"
+								},
+								"authentication": {
+									"type": "MSI",
+									"resource": "https://analysis.windows.net/powerbi/api"
+								}
+							}
+						},
+						{
+							"name": "If dataset refresh unknown",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "Get dataset refresh status",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@equals(\n    first(\n        json(\n            string(\n                activity('Get dataset refresh status').output\n            )\n        ).value\n    ).status,'Unknown'\n)",
+									"type": "Expression"
+								},
+								"ifTrueActivities": [
+									{
+										"name": "Wait 15 sec",
+										"type": "Wait",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"waitTimeInSeconds": 15
+										}
+									}
+								]
+							}
+						}
+					],
+					"timeout": "0.12:00:00"
+				}
+			},
+			{
+				"name": "If dataset refrehs failed",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Until dataset refresh completion",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(\n    first(\n        json(\n            string(\n                activity('Get dataset refresh status').output\n            )\n        ).value\n    ).status,'Failed'\n)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Failed refreshing dataset",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": {
+									"value": "@string(\n    json(\n        first(\n            json(\n                string(\n                    activity('Get dataset refresh status').output\n                )\n            ).value\n        ).serviceExceptionJson\n    )\n)",
+									"type": "Expression"
+								},
+								"errorCode": "PowerBI refresh error"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Error message",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "If dataset refrehs failed",
+						"dependencyConditions": [
+							"Failed",
+							"Skipped"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "https://prod2-49.westeurope.logic.azure.com:443/workflows/1200b5cab09647219b0708f08cae5a2b/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=6sO6rXKO1U6Kf0PxPHUSXgCGl2Fu7dKPgPg0-vLptHs",
+					"method": "POST",
+					"body": {
+						"value": "{\n\"message\":\"Something went wrong in the balcap simulation!\",\n\"dataFactoryName\":\"@{pipeline().parameters.dataFactoryName}\",\n\"pipelineName\":\"pl_prod_balcap_simulation\",\n\"receiver\":\"@{pipeline().parameters.receiver}\"\n}",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set current day",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "curr_day",
+					"value": {
+						"value": "@string(formatDateTime(utcnow(), 'yyyy-MM-dd'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Wait 30 sec",
+				"type": "Wait",
+				"dependsOn": [
+					{
+						"activity": "Is vm deallocated",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"waitTimeInSeconds": 30
+				}
+			},
+			{
+				"name": "get vm status after Start",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Wait 30 sec",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.SubscriptionId,'/resourceGroups/',pipeline().parameters.ResourceGroupName,'/providers/Microsoft.Compute/virtualMachines/',pipeline().parameters.VMName,'/InstanceView?api-version=2022-11-01') \n",
+						"type": "Expression"
+					},
+					"method": "GET",
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://management.azure.com"
+					}
+				}
+			},
+			{
+				"name": "Is vm can be available",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "get vm status after Start",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@or(\n    or(\n        equals(\n            activity('get vm status after Start').output.statuses[1].displayStatus,\n            'VM starting'\n        ),\n        equals(\n            activity('get vm status after Start').output.statuses[1].displayStatus,\n            'VM updating'\n        )\n    ),\n    equals(\n        activity('get vm status after Start').output.statuses[1].displayStatus,\n        'VM running'    \n    )\n)",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "VM starting has failed",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": "VM starting has faild.",
+								"errorCode": "VM starting has failed"
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"SubscriptionId": {
+				"type": "string",
+				"defaultValue": "2583ad26-6738-4d23-94ec-18efe0209290"
+			},
+			"ResourceGroupName": {
+				"type": "string",
+				"defaultValue": "ARTEMIS-RG01"
+			},
+			"VMName": {
+				"type": "string",
+				"defaultValue": "vm-balcap"
+			},
+			"CommandStart": {
+				"type": "string",
+				"defaultValue": "Start"
+			},
+			"CommandPause": {
+				"type": "string",
+				"defaultValue": "Deallocate"
+			},
+			"WorkspaceName": {
+				"type": "string",
+				"defaultValue": "Bal. Cap. Reserve Market"
+			},
+			"DatasetName": {
+				"type": "string",
+				"defaultValue": "Bal. Cap. Price Simulation"
+			},
+			"dataFactoryName": {
+				"type": "string",
+				"defaultValue": "df-artemis-dev"
+			},
+			"receiver": {
+				"type": "string",
+				"defaultValue": "artemis-support@alteo.hu"
+			}
+		},
+		"variables": {
+			"FirstDayOfCalculatedMonth": {
+				"type": "String",
+				"defaultValue": "DATEADD(MONTH, DATEDIFF(MONTH, 0, DATEADD(DAY,-1,GETDATE())), 0)"
+			},
+			"LastDayOfCalculatedMonth": {
+				"type": "String",
+				"defaultValue": "DATEADD(MONTH, DATEDIFF(MONTH, -1, DATEADD(DAY,-2,GETDATE())), -1)"
+			},
+			"trading_day_5": {
+				"type": "String"
+			},
+			"yesterday": {
+				"type": "String"
+			},
+			"trading_day_10": {
+				"type": "String"
+			},
+			"trading_day_15": {
+				"type": "String"
+			},
+			"trading_day_20": {
+				"type": "String"
+			},
+			"day": {
+				"type": "String"
+			},
+			"curr_day": {
+				"type": "String"
+			},
+			"sdf": {
+				"type": "String"
+			},
+			"gert": {
+				"type": "String"
+			},
+			"is_trading_Day": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-04-03T12:22:54Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

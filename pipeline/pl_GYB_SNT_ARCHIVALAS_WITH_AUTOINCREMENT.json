@@ -1,0 +1,261 @@
+{
+	"name": "pl_GYB_SNT_ARCHIVALAS_WITH_AUTOINCREMENT",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@range(0,pipeline().parameters.dayToGet)",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Append variable1",
+							"type": "AppendVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "daysRange",
+								"value": {
+									"value": "@addDays(\n    pipeline().parameters.startDate, \n    mul(\n        item(),\n        if(\n            equals(pipeline().parameters.timeDirection, '-'),\n            1,\n            1\n        )\n    )\n)",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "ForEach2",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "ForEach1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('daysRange')",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "sp DO_SWITCH_FOR_PARQUET_SNT_KAT_PROD_ARCH",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[ARCHIVE].[DO_SWITCH_FOR_PARQUET_SNT_KAT_PROD_ARCH]",
+								"storedProcedureParameters": {
+									"BDAY": {
+										"value": {
+											"value": "@formatDateTime(string(item()),'yyyy-MM-ddTHH:mm:ss')",
+											"type": "Expression"
+										},
+										"type": "Datetime"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "Artemis01_prod_mek",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Lookup MIN BUSINESSDAY",
+							"type": "Lookup",
+							"dependsOn": [
+								{
+									"activity": "sp DO_SWITCH_FOR_PARQUET_SNT_KAT_PROD_ARCH",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlMISource",
+									"sqlReaderQuery": "SELECT MIN(BUSINESSDAY) AS MI FROM MEK.ARCHIVE.STAGING_SNT_KAT_PROD_ARCH",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "artemis01_prod_mek_archive_staging_snt_kat_prod_arch",
+									"type": "DatasetReference"
+								}
+							}
+						},
+						{
+							"name": "Set v_min_businessday",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Lookup MIN BUSINESSDAY",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "v_min_businessday",
+								"value": {
+									"value": "@string(activity('Lookup MIN BUSINESSDAY').output.firstRow.MI)",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Copy data",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Set v_min_businessday",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "SqlMISource",
+									"partitionOption": "None"
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "artemis01_prod_mek_archive_staging_snt_kat_prod_arch",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "alteoarchivedev_MEK_ARCHIVE_SNT_KAT_PROD_ARCH_PARQUET",
+									"type": "DatasetReference",
+									"parameters": {
+										"bday": {
+											"value": "@formatDateTime(variables('v_min_businessday'), 'yyyy_MM_dd')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "ForEach3",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "ForEach1",
+						"dependencyConditions": [
+							"Skipped"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('daysRange')",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Set variable1",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "teszt",
+								"value": {
+									"value": "@string(item())",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"startDate": {
+				"type": "string",
+				"defaultValue": "2022-05-17T00:00:00Z"
+			},
+			"dayToGet": {
+				"type": "int",
+				"defaultValue": 1
+			},
+			"timeDirection": {
+				"type": "string",
+				"defaultValue": "-"
+			}
+		},
+		"variables": {
+			"daysRange": {
+				"type": "Array",
+				"defaultValue": []
+			},
+			"v_min_businessday": {
+				"type": "String"
+			},
+			"teszt": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-03-21T15:21:16Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

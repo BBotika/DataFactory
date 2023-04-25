@@ -1,0 +1,67 @@
+{
+	"name": "TEST__ADF__DT_PP_5MIN",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "artemis_test_dev",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "UTCStartDateTime",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "PP_RAW_DEVMSRMNT_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "PP_RAW_Plant_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "PP_RAW_FieldName_ID",
+				"type": "varchar"
+			},
+			{
+				"name": "Device_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "Plant_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "UOM_Orig_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "UOM_New_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "Equipment_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "composite_flag",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "ADF",
+			"table": "DT_PP_5min"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

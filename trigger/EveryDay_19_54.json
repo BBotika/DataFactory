@@ -1,0 +1,26 @@
+{
+	"name": "EveryDay_19_54",
+	"properties": {
+		"description": "Minden nap 19:54, scheduled",
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "EODLOG_to_Parquet_in_ADSL",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2022-11-08T18:54:00Z",
+				"endTime": "2022-11-30T00:41:00Z",
+				"timeZone": "UTC"
+			}
+		}
+	}
+}

@@ -1,0 +1,68 @@
+{
+	"name": "REP_DB__ASZK_X__COMPOSITE_DEVICE_LIST",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "artemis_rep_db_dev",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "REP_DB"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "OrigDevice_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "CompositeDevice_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "PP_RAW_Plant_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "PP_RAW_DEVMSRMNT_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "PP_RAW_FieldName_ID",
+				"type": "varchar"
+			},
+			{
+				"name": "Device_Name",
+				"type": "varchar"
+			},
+			{
+				"name": "KKS_ID",
+				"type": "varchar"
+			},
+			{
+				"name": "UOM_Orig_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "UOM_New_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "Sign_multip",
+				"type": "smallint",
+				"precision": 5
+			}
+		],
+		"typeProperties": {
+			"schema": "aszk_x",
+			"table": "CompositeDevice_List"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

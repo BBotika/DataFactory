@@ -1,0 +1,24 @@
+{
+	"name": "SinveDB",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"description": "FIGYELEM, csak TLS 1.1 vagy 1.0-val megy, TLS 1.2-vel nem . A self hosted IR-on a DMZ-ben be van allitva, hogy azt hasznaljuk",
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Data Source=192.168.140.1\\VECENTRAL_DBSRV,1433;Initial Catalog=SINVE_DB;User ID=sinuser",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "kv_artemis_prod_02",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "sinve-db--sinuser"
+			}
+		},
+		"connectVia": {
+			"referenceName": "prod-SelfHostedIR-dmz-outbound-01",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

@@ -1,0 +1,43 @@
+{
+	"name": "balcap_every_day_02_00",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_prod_balcap",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"SubscriptionId": "2583ad26-6738-4d23-94ec-18efe0209290",
+					"ResourceGroupName": "ARTEMIS-RG01",
+					"VMName": "vm-balcap",
+					"CommandStart": "Start",
+					"CommandPause": "Deallocate",
+					"WorkspaceName": "Bal. Cap. Reserve Market",
+					"DatasetName": "Bal. Cap. Price Simulation",
+					"dataFactoryName": "df-artemis-dev",
+					"receiver": "artemis-support@alteo.hu"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2023-03-30T14:27:00",
+				"timeZone": "Central Europe Standard Time",
+				"schedule": {
+					"minutes": [
+						0
+					],
+					"hours": [
+						2
+					]
+				}
+			}
+		}
+	}
+}

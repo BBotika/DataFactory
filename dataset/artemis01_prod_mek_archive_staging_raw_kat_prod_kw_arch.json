@@ -1,0 +1,61 @@
+{
+	"name": "artemis01_prod_mek_archive_staging_raw_kat_prod_kw_arch",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Artemis01_prod_mek",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Artemis_01_prod_MEK"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "SCH_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "UTCLOGDATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "BUSINESSDAY",
+				"type": "date"
+			},
+			{
+				"name": "DAID",
+				"type": "tinyint",
+				"precision": 3
+			},
+			{
+				"name": "POD_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "UTCSTARTDATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "SCHEDULE_VALUE",
+				"type": "decimal",
+				"precision": 9,
+				"scale": 3
+			},
+			{
+				"name": "PRODUCTION_FC_ID",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "ARCHIVE",
+			"table": "STAGING_RAW_KAT_PROD_kW_ARCH"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,40 @@
+{
+	"name": "pl_Nested_Execution_Success",
+	"properties": {
+		"activities": [
+			{
+				"name": "pl_Execution_Success",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Success",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Fail1",
+				"type": "Fail",
+				"dependsOn": [
+					{
+						"activity": "pl_Execution_Success",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"message": "asd",
+					"errorCode": "asd"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2023-03-21T15:21:16Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

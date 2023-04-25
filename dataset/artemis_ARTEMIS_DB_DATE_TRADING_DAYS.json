@@ -1,0 +1,52 @@
+{
+	"name": "artemis_ARTEMIS_DB_DATE_TRADING_DAYS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "artemis_artemis_db_dev",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "Date",
+				"type": "date"
+			},
+			{
+				"name": "Trading_day_EEX",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "Trading_day_HUDEX_power",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "TTF_M1_drop_flag",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "TTF_Q1_drop_flag",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "TTF_Y1_drop_flag",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "Working_day_KAT",
+				"type": "smallint",
+				"precision": 5
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "Date_Trading_days"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,40 @@
+{
+	"name": "REP_DB_ASZK_GASEINGINE_CONFIG",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "artemis_rep_db_dev",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "REP_DB"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "PLANT_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "STATUS_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "GASMOTOR_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "TYPE",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "aszk",
+			"table": "CD_GASENGINE_CONFIG"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

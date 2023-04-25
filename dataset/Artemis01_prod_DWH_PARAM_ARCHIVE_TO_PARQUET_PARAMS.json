@@ -1,0 +1,35 @@
+{
+	"name": "Artemis01_prod_DWH_PARAM_ARCHIVE_TO_PARQUET_PARAMS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Artemis01_prod",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "SERVER_NAME",
+				"type": "varchar"
+			},
+			{
+				"name": "SCHEMA_NAME",
+				"type": "varchar"
+			},
+			{
+				"name": "TABLE_NAME",
+				"type": "varchar"
+			},
+			{
+				"name": "KEEP_MONTHS",
+				"type": "smallint",
+				"precision": 5
+			}
+		],
+		"typeProperties": {
+			"schema": "PARAM",
+			"table": "ARCHIVE_TO_PARQUET_PARAMS"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

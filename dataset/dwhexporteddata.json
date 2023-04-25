@@ -1,0 +1,25 @@
+{
+	"name": "dwhexporteddata",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "alteoarchivedev",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "dwh",
+				"folderPath": {
+					"value": "@formatDateTime(utcnow(), 'yyyy-MM-dd')",
+					"type": "Expression"
+				},
+				"fileSystem": "databasearchives"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

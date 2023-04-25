@@ -1,0 +1,41 @@
+{
+	"name": "REP_DB_ASZK_CD_GASENGINE_PARAMETER",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "artemis_rep_db_dev",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "REP_DB"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "AFTER_START_TIMELIMIT_AS_SEC",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "AFTER_STOP_TIMELIMIT_AS_SEC",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "P_MAX",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "DAY_BEFORE",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "aszk",
+			"table": "CD_GASENGINE_PARAMETER"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

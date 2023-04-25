@@ -1,0 +1,60 @@
+{
+	"name": "Artemis01_prod_ARTEMIS_DWH_old_DBO_PP_RAW_log",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Artemis01_prod_artemis_dwh_old",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "AUTO_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "UTCLogDate",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "LogDate",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "shevent_message",
+				"type": "varchar"
+			},
+			{
+				"name": "shevent_varname",
+				"type": "varchar"
+			},
+			{
+				"name": "shevent_val",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "shevent_terminal",
+				"type": "varchar"
+			},
+			{
+				"name": "shevent_priority",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "shevent_group",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "PP_RAW_log"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

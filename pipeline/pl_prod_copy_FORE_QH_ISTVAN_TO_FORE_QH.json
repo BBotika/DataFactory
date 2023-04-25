@@ -1,0 +1,35 @@
+{
+	"name": "pl_prod_copy_FORE_QH_ISTVAN_TO_FORE_QH",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy FORE_QH_ISTVAN_TO_FORE_QH",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "1.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "INSERT INTO DM.AF_FORE_QH (UTC_START_DATETIME, UTC_MODEL_QUERY_DATETIME, UTC_QUERY_DATETIME, MODEL_ID, DATA_TYPE_DICT_ID, DIM_DATA_TYPE_ID, LOCATION_ID, LEAD_TIME_QH, FORECASTED_VALUE)\nSELECT\n    T.UTC_START_DATETIME\n    ,T.UTC_MODEL_QUERY_DATETIME\n    ,T.UTC_QUERY_DATETIME\n    ,T.MODEL_ID\n    ,DIDT.DATA_TYPE_DICT_ID\n    ,T.DIM_DATA_TYPE_ID\n    ,T.LOCATION_ID\n    ,T.LEAD_TIME_QH\n    ,T.FORECASTED_VALUE\nFROM\n    DM.AF_FORE_QH_ISTVAN T\nINNER JOIN\n    DW.DW_DIM_DATA_TYPE DIDT\nON\n    T.DIM_DATA_TYPE_ID = DIDT.ID\n\nselect 1",
+						"queryTimeout": "24:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "FORE_QH_ISTVAN",
+						"type": "DatasetReference"
+					}
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2023-03-02T15:37:55Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,56 @@
+{
+	"name": "artemis01_prod_mek_archive_staging_snt_kat_prod_wo_arb_arch",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Artemis01_prod_mek",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Artemis_01_prod_MEK"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "SCH_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "UTCLOGDATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "BUSINESSDAY",
+				"type": "date"
+			},
+			{
+				"name": "DAID",
+				"type": "tinyint",
+				"precision": 3
+			},
+			{
+				"name": "POD_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "UTCSTARTDATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "SCHEDULE_VALUE",
+				"type": "decimal",
+				"precision": 9,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "ARCHIVE",
+			"table": "STAGING_SNT_KAT_PROD_WO_ARB_ARCH"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

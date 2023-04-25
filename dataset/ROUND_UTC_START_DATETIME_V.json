@@ -1,0 +1,29 @@
+{
+	"name": "ROUND_UTC_START_DATETIME_V",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "artemis_test_dev",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "UTCStartDateTime",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "orig",
+				"type": "datetime2",
+				"scale": 2
+			}
+		],
+		"typeProperties": {
+			"schema": "ADF",
+			"table": "ROUND_UTC_START_DATETIME_V"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

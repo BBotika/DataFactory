@@ -1,0 +1,259 @@
+{
+	"name": "pl_prod_balcap",
+	"properties": {
+		"activities": [
+			{
+				"name": "get trading days",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "pl_Execution_Start",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": {
+							"value": "select [Date] as trading_day from\n  (\n    SELECT \n      row_number() over (partition by DATEADD(MONTH,DATEDIFF(MONTH, 0, Date), 0) order by Date) rn,\n      Date\n    FROM\n      [ARTEMIS_DB].[dbo].[Date_Trading_days]\n    where \n      trading_day_EEX=1 and\n      Trading_day_HUDEX_power=1 and\n      [Date] between @{variables('FirstDayOfCalculatedMonth')} and @{variables('LastDayOfCalculatedMonth')}\n  ) a\n  where rn in (5,10,15,20)\n    \n  except\n    select\n      [Date]\n    from\n      (\n        SELECT row_number() over (partition by DATEADD(MONTH, DATEDIFF(MONTH, 0, Date), 0) order by Date desc) rn, Date\n        FROM\n          [ARTEMIS_DB].[dbo].[Date_Trading_days]\n        where\n          trading_day_EEX=1 and\n          Trading_day_HUDEX_power=1 and\n          [Date] between @{variables('FirstDayOfCalculatedMonth')} and @{variables('LastDayOfCalculatedMonth')}\n      ) a\n      where rn<=2",
+							"type": "Expression"
+						},
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "artemis_ARTEMIS_DB_DATE_TRADING_DAYS",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Is yesterday trading day",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "ForEach in trading days",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(variables('is_trading_Day'),'1')",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "pl_Execution_Success",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_Execution_Success",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "pl_prod_balcap_simulation",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_prod_balcap_simulation",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "pl_Execution_Start",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Start",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Set yesterday",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "get trading days",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "yesterday",
+					"value": {
+						"value": "@string(formatDateTime(adddays(utcnow(),-1), 'yyyy-MM-dd'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEach in trading days",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set yesterday",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('get trading days').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "If yesterday and trading day is matched",
+							"type": "IfCondition",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@contains(item().trading_day,variables('yesterday'))",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "Set if not trading day",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "is_trading_Day",
+											"value": "0"
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "Set if trading day",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "is_trading_Day",
+											"value": "1"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"SubscriptionId": {
+				"type": "string",
+				"defaultValue": "2583ad26-6738-4d23-94ec-18efe0209290"
+			},
+			"ResourceGroupName": {
+				"type": "string",
+				"defaultValue": "ARTEMIS-RG01"
+			},
+			"VMName": {
+				"type": "string",
+				"defaultValue": "vm-balcap"
+			},
+			"CommandStart": {
+				"type": "string",
+				"defaultValue": "Start"
+			},
+			"CommandPause": {
+				"type": "string",
+				"defaultValue": "Deallocate"
+			},
+			"WorkspaceName": {
+				"type": "string",
+				"defaultValue": "Bal. Cap. Reserve Market"
+			},
+			"DatasetName": {
+				"type": "string",
+				"defaultValue": "Bal. Cap. Price Simulation"
+			},
+			"dataFactoryName": {
+				"type": "string",
+				"defaultValue": "df-artemis-dev"
+			},
+			"receiver": {
+				"type": "string",
+				"defaultValue": "artemis-support@alteo.hu"
+			}
+		},
+		"variables": {
+			"FirstDayOfCalculatedMonth": {
+				"type": "String",
+				"defaultValue": "DATEADD(MONTH, DATEDIFF(MONTH, 0, DATEADD(DAY,-1,GETDATE())), 0)"
+			},
+			"LastDayOfCalculatedMonth": {
+				"type": "String",
+				"defaultValue": "DATEADD(MONTH, DATEDIFF(MONTH, -1, DATEADD(DAY,-2,GETDATE())), -1)"
+			},
+			"trading_day_5": {
+				"type": "String"
+			},
+			"trading_day_10": {
+				"type": "String"
+			},
+			"trading_day_15": {
+				"type": "String"
+			},
+			"trading_day_20": {
+				"type": "String"
+			},
+			"day": {
+				"type": "String"
+			},
+			"curr_day": {
+				"type": "String"
+			},
+			"is_trading_Day": {
+				"type": "String"
+			},
+			"asd": {
+				"type": "String"
+			},
+			"yesterday": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-04-17T13:49:34Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

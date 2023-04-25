@@ -1,0 +1,30 @@
+{
+	"name": "alteoarchivedev_to_parquet_data",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "alteoarchivedev",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"utc_from": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat('DW_FORECAST_',dataset().utc_from)",
+					"type": "Expression"
+				},
+				"folderPath": "DWH/DW.DW_FORECAST",
+				"fileSystem": "databasearchives"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

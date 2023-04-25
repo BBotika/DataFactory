@@ -1,0 +1,64 @@
+{
+	"name": "DUPLPPTMINDATA",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "artemis_test_dev",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "UTCStartDateTime",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "Device_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "MSRMNT_Value",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "CalcOrMeasured_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Equipment_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "composite_flag",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "UOM_New_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "UOM_Orig_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "Plant_ID",
+				"type": "smallint",
+				"precision": 5
+			}
+		],
+		"typeProperties": {
+			"schema": "ADF",
+			"table": "DUPL_PP_5min_data"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

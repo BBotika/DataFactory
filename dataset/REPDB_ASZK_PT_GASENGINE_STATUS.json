@@ -1,0 +1,86 @@
+{
+	"name": "REPDB_ASZK_PT_GASENGINE_STATUS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "artemis_rep_db_dev",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "REP_DB"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "UTC_LOG_DATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "F_STARTING",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "F_STARTABLE",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "F_RUNNING",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "F_STOPPABLE",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "F_STOPPING",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "F_STOPPED",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "F_FAULT",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "F_REMOTE_CONTROL",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "F_LOCAL_CONTROL",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "GAS_ENGINE_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "PLANT_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "EQUIPMENT_ID",
+				"type": "smallint",
+				"precision": 5
+			}
+		],
+		"typeProperties": {
+			"schema": "aszk",
+			"table": "PT_GASENGINE_STATUS"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

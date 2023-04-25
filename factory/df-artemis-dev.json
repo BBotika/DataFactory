@@ -1,0 +1,9 @@
+{
+	"name": "df-artemis-dev",
+	"location": "westeurope",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "5b8d8bfa-1016-4511-b7b5-849fe315a64c",
+		"tenantId": "15833e6a-b99b-4bb8-b02a-d4ae48258b0c"
+	}
+}

@@ -1,0 +1,200 @@
+{
+	"name": "PL_BERAGADT_FL",
+	"properties": {
+		"activities": [
+			{
+				"name": "map_comdev_dtpp5m",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "map_comdev_dtpp5m",
+						"type": "DataFlowReference",
+						"parameters": {
+							"from_utc_datetime": "toTimestamp('2022-09-20', 'yyyy-MM-dd')",
+							"to_utc_datetime": "toTimestamp('2022-09-21', 'yyyy-MM-dd')"
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "map_dtpp5m_rapp5d",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "TRUNC RAPP5D",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "map_comdev_dtpp5m",
+						"type": "DataFlowReference",
+						"parameters": {
+							"from_utc_datetime": "toTimestamp('2022-09-20', 'yyyy-MM-dd')",
+							"to_utc_datetime": "toTimestamp('2022-09-21', 'yyyy-MM-dd')"
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "Stored procedure1",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "map_rapp5d_dupl",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[SAZO_TEST2]"
+				},
+				"linkedServiceName": {
+					"referenceName": "artemis_artemis_db_dev",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "TRUNC RAPP5D",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "map_comdev_dtpp5m",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "TRUNCATE TABLE TEST.ADF.RAW_PP_5min_data_kW;\nSELECT * FROM TEST.ADF.RAW_PP_5min_data_kW",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "TEST__ADF__RAW_PP_5MIN_DATA_KW",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "map_dtpp5m_rapp5d_fictive",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "TRUNC RAPP5D",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "map_dtpp5m_rapp5d_fictive",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "map_rapp5d_dupl",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "map_dtpp5m_rapp5d",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "map_dtpp5m_rapp5d_fictive",
+						"dependencyConditions": [
+							"Succeeded",
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "map_rapp5d_dupl",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2022-11-29T13:19:43Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

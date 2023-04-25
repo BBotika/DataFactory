@@ -1,0 +1,382 @@
+{
+	"name": "pl_prod_DWH_DW_DW_FORECAST_TO_PARQUETE",
+	"properties": {
+		"description": "DWH.DW.DW_FORACAST tábla archiválását végző pipeline, mely rollingwindowba 6 hónapot tart meg.",
+		"activities": [
+			{
+				"name": "pl_Execution_Start",
+				"description": "Logolás START?",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Start",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "pl_Execution_Success",
+				"description": "Logolás SUCCESS?",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Delete from DWH_ARCHIVE2BLOB_dbo_DW_FORECAST2BLOB",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Start",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "pl_Execution_Failure",
+				"description": "Logolás FAIL?",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "sp_create_archive_table",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "pl_Execution_Start",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Delete from DWH_ARCHIVE2BLOB_dbo_DW_FORECAST2BLOB",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Lookup DW_FORECAST",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Set v_keep_months",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Set v_utc_keep_from",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Lookup min_UTC from toarchive",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Set v_min_utc",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Copy Selected Data From SQL To Parquet",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Failure",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "sp_create_archive_table",
+				"description": "Archiválandó adatok előállítása SQL oldalon DWH.DW.DW_FOREACAST esetén.",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Set v_utc_keep_from",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[DWH].[DO_ARCHIVE_TO_PARQUETE_DW_FORECAST]",
+					"storedProcedureParameters": {
+						"UTC_KEEP_FROM": {
+							"value": {
+								"value": "@variables('v_utc_keep_from')",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Artemis01_prod",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Lookup DW_FORECAST",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "pl_Execution_Start",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "SELECT KEEP_MONTHS FROM DWH.PARAM.ARCHIVE_TO_PARQUET_PARAMS\nWHERE SERVER_NAME = 'DWH' AND SCHEMA_NAME = 'DW' AND TABLE_NAME = 'DW_FORECAST'",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "Artemis01_prod_DWH_PARAM_ARCHIVE_TO_PARQUET_PARAMS",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "Set v_utc_keep_from",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set v_keep_months",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_utc_keep_from",
+					"value": {
+						"value": "@convertToUtc(addToTime(formatDateTime(startOfMonth(utcNow()),'yyyy-MM-ddTHH:mm:ss'),mul(int(variables('v_keep_months')),-1),'Month'),'Central European Standard Time')\n",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set v_keep_months",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Lookup DW_FORECAST",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_keep_months",
+					"value": {
+						"value": "@string(activity('Lookup DW_FORECAST').output.firstRow.KEEP_MONTHS)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Delete from DWH_ARCHIVE2BLOB_dbo_DW_FORECAST2BLOB",
+				"description": "Már archivált rekordok törlése",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Copy Selected Data From SQL To Parquet",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "TRUNCATE TABLE DWH_ARCHIVE2BLOB.dbo.DW_FORECAST2BLOB\nSELECT COUNT(*) FROM DWH_ARCHIVE2BLOB.dbo.DW_FORECAST2BLOB",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "Artemis01_prod_DWH_ARCHIVE2BLOB_DBO_DW_FORECAST2BLOB",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Lookup min_UTC from toarchive",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "sp_create_archive_table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "SELECT MIN(UTC_START_DATETIME) as MIN_UTC FROM DWH_ARCHIVE2BLOB.dbo.DW_FORECAST2BLOB",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "Artemis01_prod_DWH_ARCHIVE2BLOB_DBO_DW_FORECAST2BLOB",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Set v_min_utc",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Lookup min_UTC from toarchive",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_min_utc",
+					"value": {
+						"value": "@string(activity('Lookup min_UTC from toarchive').output.firstRow.MIN_UTC)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Copy Selected Data From SQL To Parquet",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Set v_min_utc",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Artemis01_prod_DWH_ARCHIVE2BLOB_DBO_DW_FORECAST2BLOB",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "alteoarchivedev_to_parquet_data",
+						"type": "DatasetReference",
+						"parameters": {
+							"utc_from": {
+								"value": "@formatDateTime(variables('v_min_utc'), 'yyyyMMddHHmm')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"concurrency": 1,
+		"variables": {
+			"v_keep_months": {
+				"type": "String"
+			},
+			"v_utc_keep_from": {
+				"type": "String"
+			},
+			"v_min_utc": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-02-22T20:41:46Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

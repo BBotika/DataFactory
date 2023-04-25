@@ -1,0 +1,48 @@
+{
+	"name": "ARTEMIS_DB__DBO__DATETIME_TABLE",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "artemis_artemis_db_dev",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "UTC_DateTime",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "Local_DateTime",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "UTC_D_Flag",
+				"type": "tinyint",
+				"precision": 3
+			},
+			{
+				"name": "Local_D_Flag",
+				"type": "tinyint",
+				"precision": 3
+			},
+			{
+				"name": "H_Flag",
+				"type": "tinyint",
+				"precision": 3
+			},
+			{
+				"name": "qH_Flag",
+				"type": "tinyint",
+				"precision": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "DateTime_Table"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

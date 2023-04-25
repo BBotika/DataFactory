@@ -1,0 +1,75 @@
+{
+	"name": "map_dtpp5m_rapp5d_fictive",
+	"properties": {
+		"folder": {
+			"name": "BERAGADT_FL"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "TEST__ADF__DT_PP_5MIN",
+						"type": "DatasetReference"
+					},
+					"name": "DTPP5MIN"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DUPLPPTMINDATA",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "filter1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          UTCStartDateTime as timestamp,",
+				"          PP_RAW_DEVMSRMNT_ID as integer,",
+				"          PP_RAW_Plant_ID as integer,",
+				"          PP_RAW_FieldName_ID as string,",
+				"          Device_ID as integer,",
+				"          Plant_ID as integer,",
+				"          UOM_Orig_ID as integer,",
+				"          UOM_New_ID as integer,",
+				"          Equipment_ID as integer,",
+				"          composite_flag as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> DTPP5MIN",
+				"DTPP5MIN filter(isNull(PP_RAW_DEVMSRMNT_ID) || isNull(PP_RAW_Plant_ID)) ~> filter1",
+				"filter1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          UTCStartDateTime as timestamp,",
+				"          Device_ID as integer,",
+				"          MSRMNT_Value as double,",
+				"          CalcOrMeasured_ID as integer,",
+				"          Equipment_ID as integer,",
+				"          composite_flag as integer,",
+				"          UOM_New_ID as integer,",
+				"          UOM_Orig_ID as integer,",
+				"          Plant_ID as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}

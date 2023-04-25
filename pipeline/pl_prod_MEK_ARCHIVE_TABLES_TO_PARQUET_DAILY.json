@@ -1,0 +1,607 @@
+{
+	"name": "pl_prod_MEK_ARCHIVE_TABLES_TO_PARQUET_DAILY",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execution Start",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Start",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Execution Success",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy SNT_KAT_PROD data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Copy RAW_KAT_PROD data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Copy SNT_KAT_PROD_WO_ARB data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Success",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Execution Failure",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy SNT_KAT_PROD data",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "sp DO_SWITCH_FOR_PARQUET_SNT_KAT_PROD_ARCH",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Lookup MIN BUSINESSDAY SNT_KAT_PROD",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Set v_min_businessday SNT_KAT_PROD",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "sp DO_SWITCH_FOR_PARQUET_RAW_KAT_PROD_kW_ARCH",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Lookup MIN BUSINESSDAY RAW_KAT_PROD",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Set v_min_businessday RAW_KAT_PROD",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Copy RAW_KAT_PROD data",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "sp DO_SWITCH_FOR_PARQUET_SNT_KAT_PROD_WO_ARB_ARCH",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Lookup MIN BUSINESSDAY SNT_KAT_PROD_WO_ARB",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Set v_min_businessday SNT_KAT_PROD_WO_ARB",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Copy SNT_KAT_PROD_WO_ARB data",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Failure",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "sp DO_SWITCH_FOR_PARQUET_SNT_KAT_PROD_ARCH",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Set v_today - 60 days",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[ARCHIVE].[DO_SWITCH_FOR_PARQUET_SNT_KAT_PROD_ARCH]",
+					"storedProcedureParameters": {
+						"BDAY": {
+							"value": {
+								"value": "@formatDateTime(variables('v_today'),'yyyy-MM-ddTHH:mm:ss')",
+								"type": "Expression"
+							},
+							"type": "Datetime"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Artemis01_prod_mek",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Lookup MIN BUSINESSDAY SNT_KAT_PROD",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "sp DO_SWITCH_FOR_PARQUET_SNT_KAT_PROD_ARCH",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "SELECT MIN(BUSINESSDAY) AS MI FROM MEK.ARCHIVE.STAGING_SNT_KAT_PROD_ARCH",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "artemis01_prod_mek_archive_staging_snt_kat_prod_arch",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Set v_min_businessday SNT_KAT_PROD",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Lookup MIN BUSINESSDAY SNT_KAT_PROD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_min_businessday",
+					"value": {
+						"value": "@string(activity('Lookup MIN BUSINESSDAY SNT_KAT_PROD').output.firstRow.MI)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Copy SNT_KAT_PROD data",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Set v_min_businessday SNT_KAT_PROD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "artemis01_prod_mek_archive_staging_snt_kat_prod_arch",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "alteoarchivedev_MEK_ARCHIVE_SNT_KAT_PROD_ARCH_PARQUET",
+						"type": "DatasetReference",
+						"parameters": {
+							"bday": "@formatDateTime(variables('v_min_businessday'), 'yyyy_MM_dd')"
+						}
+					}
+				]
+			},
+			{
+				"name": "Set v_today - 60 days",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Execution Start",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_today",
+					"value": {
+						"value": "@addDays(utcnow(),-60)\n",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "sp DO_SWITCH_FOR_PARQUET_RAW_KAT_PROD_kW_ARCH",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Set v_today - 60 days",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[ARCHIVE].[DO_SWITCH_FOR_PARQUET_RAW_KAT_PROD_kW_ARCH]",
+					"storedProcedureParameters": {
+						"BDAY": {
+							"value": {
+								"value": "@formatDateTime(variables('v_today'),'yyyy-MM-ddTHH:mm:ss')",
+								"type": "Expression"
+							},
+							"type": "Datetime"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Artemis01_prod_mek",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Lookup MIN BUSINESSDAY RAW_KAT_PROD",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "sp DO_SWITCH_FOR_PARQUET_RAW_KAT_PROD_kW_ARCH",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "SELECT MIN(BUSINESSDAY) AS MI FROM MEK.ARCHIVE.STAGING_RAW_KAT_PROD_kW_ARCH",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "artemis01_prod_mek_archive_staging_raw_kat_prod_kw_arch",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Set v_min_businessday RAW_KAT_PROD",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Lookup MIN BUSINESSDAY RAW_KAT_PROD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_min_businessday",
+					"value": {
+						"value": "@string(activity('Lookup MIN BUSINESSDAY RAW_KAT_PROD').output.firstRow.MI)\n\n\n",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Copy RAW_KAT_PROD data",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Set v_min_businessday RAW_KAT_PROD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "artemis01_prod_mek_archive_staging_raw_kat_prod_kw_arch",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "alteoarchivedev_MEK_ARCHIVE_RAW_KAT_PROD_kW_ARCH_PARQUET",
+						"type": "DatasetReference",
+						"parameters": {
+							"bday": "@formatDateTime(variables('v_min_businessday'), 'yyyy_MM_dd')"
+						}
+					}
+				]
+			},
+			{
+				"name": "sp DO_SWITCH_FOR_PARQUET_SNT_KAT_PROD_WO_ARB_ARCH",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Set v_today - 60 days",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[ARCHIVE].[DO_SWITCH_FOR_PARQUET_SNT_KAT_PROD_WO_ARB_ARCH]",
+					"storedProcedureParameters": {
+						"BDAY": {
+							"value": {
+								"value": "@formatDateTime(variables('v_today'),'yyyy-MM-ddTHH:mm:ss')",
+								"type": "Expression"
+							},
+							"type": "Datetime"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Artemis01_prod_mek",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Lookup MIN BUSINESSDAY SNT_KAT_PROD_WO_ARB",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "sp DO_SWITCH_FOR_PARQUET_SNT_KAT_PROD_WO_ARB_ARCH",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "SELECT MIN(BUSINESSDAY) AS MI FROM MEK.ARCHIVE.STAGING_SNT_KAT_PROD_WO_ARB_ARCH",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "artemis01_prod_mek_archive_staging_snt_kat_prod_wo_arb_arch",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Set v_min_businessday SNT_KAT_PROD_WO_ARB",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Lookup MIN BUSINESSDAY SNT_KAT_PROD_WO_ARB",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_min_businessday",
+					"value": {
+						"value": "@string(activity('Lookup MIN BUSINESSDAY SNT_KAT_PROD_WO_ARB').output.firstRow.MI)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Copy SNT_KAT_PROD_WO_ARB data",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Set v_min_businessday SNT_KAT_PROD_WO_ARB",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "artemis01_prod_mek_archive_staging_snt_kat_prod_wo_arb_arch",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "alteoarchivedev_MEK_ARCHIVE_SNT_KAT_PROD_WO_ARB_ARCH_PARQUET",
+						"type": "DatasetReference",
+						"parameters": {
+							"bday": "@formatDateTime(variables('v_min_businessday'), 'yyyy_MM_dd')"
+						}
+					}
+				]
+			}
+		],
+		"variables": {
+			"v_today": {
+				"type": "String"
+			},
+			"v_min_businessday": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-04-12T09:57:35Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

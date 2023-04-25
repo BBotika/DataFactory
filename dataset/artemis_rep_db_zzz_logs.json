@@ -1,0 +1,56 @@
+{
+	"name": "artemis_rep_db_zzz_logs",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "artemis_rep_db",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "UTCStartDay",
+				"type": "date"
+			},
+			{
+				"name": "UTCStartDateTime",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "UTCEndDateTime",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "Status_ID",
+				"type": "tinyint",
+				"precision": 3
+			},
+			{
+				"name": "ElapsedTime_s",
+				"type": "decimal",
+				"precision": 9,
+				"scale": 3
+			},
+			{
+				"name": "Procedure_ID",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "ResultComment",
+				"type": "varchar"
+			},
+			{
+				"name": "RunSource",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "zzz",
+			"table": "LOGs"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

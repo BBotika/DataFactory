@@ -1,0 +1,308 @@
+{
+	"name": "pl_prod_DWH_DM_AS_SCHEDULE_TO_PARQUET_DAILY",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup MIN_BUSINESS_DAY",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "sp DO_ARCHIVE_TO_PARQUET_DM_AS_SCHEDULE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "select min(business_day) as BUSINESS_DAY from DM.STAGING_AS_SCHEDULE2BLOB",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "Artemis01_prod_DWH_DM_STAGING_AS_SCHEDULE2BLOB",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Set v_min_business_day",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Lookup MIN_BUSINESS_DAY",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_min_business_day",
+					"value": {
+						"value": "@string(activity('Lookup MIN_BUSINESS_DAY').output.firstRow.BUSINESS_DAY)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Copy from DM_STAGING_AS_SCHEDULE_2BLOB",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Set v_min_business_day",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Artemis01_prod_DWH_DM_STAGING_AS_SCHEDULE2BLOB",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "alteoarchivedev_DWH_DM_AS_SCHEDULE",
+						"type": "DatasetReference",
+						"parameters": {
+							"bday": {
+								"value": "@formatDateTime(variables('v_min_business_day'), 'yyyy_MM_dd')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "sp DO_ARCHIVE_TO_PARQUET_DM_AS_SCHEDULE",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Set Keep Date From",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[DWH].[DO_ARCHIVE_TO_PARQUET_DM_AS_SCHEDULE]",
+					"storedProcedureParameters": {
+						"value": "@variables('v_keep_date_from')",
+						"type": "Expression"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "Artemis01_prod",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "pl_Execution_Start",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Start",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "pl_Execution_Success",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Truncate Staging Table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Success",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "pl_Execution_Failure",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy from DM_STAGING_AS_SCHEDULE_2BLOB",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "sp DO_ARCHIVE_TO_PARQUET_DM_AS_SCHEDULE",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Set v_min_business_day",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Lookup MIN_BUSINESS_DAY",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "pl_Execution_Start",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Set Keep Date From",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Truncate Staging Table",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Failure",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Set Keep Date From",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "pl_Execution_Start",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_keep_date_from",
+					"value": {
+						"value": "@string(addToTime(formatDateTime(utcNow(),'yyyy-MM-ddTHH:mm:ss'),mul(int(pipeline().parameters.p_keep_days),-1),'Day'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Truncate Staging Table",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Copy from DM_STAGING_AS_SCHEDULE_2BLOB",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "TRUNCATE TABLE DWH.DM.STAGING_AS_SCHEDULE2BLOB\nSELECT COUNT(*) FROM DWH.DM.STAGING_AS_SCHEDULE2BLOB",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "Artemis01_prod_DWH_DM_STAGING_AS_SCHEDULE2BLOB",
+						"type": "DatasetReference"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"p_keep_days": {
+				"type": "string",
+				"defaultValue": "40"
+			}
+		},
+		"variables": {
+			"v_min_business_day": {
+				"type": "String"
+			},
+			"v_keep_date_from": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-03-06T13:23:04Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

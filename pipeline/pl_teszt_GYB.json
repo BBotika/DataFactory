@@ -1,0 +1,43 @@
+{
+	"name": "pl_teszt_GYB",
+	"properties": {
+		"activities": [
+			{
+				"name": "Set Keep Months",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_keep_months",
+					"value": {
+						"value": "@string(formatDateTime(addToTime(formatDateTime(utcNow(),'yyyy-MM-ddTHH:mm:ss'),mul(int(pipeline().parameters.p_keep_days),-1),'Day'),'yyyy-mm-dd HH:mm:ss'))",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"p_keep_days": {
+				"type": "string",
+				"defaultValue": "40"
+			}
+		},
+		"variables": {
+			"v_keep_months": {
+				"type": "String"
+			},
+			"v_utc_keep_from": {
+				"type": "String"
+			},
+			"v_utc_keep_from_2": {
+				"type": "String"
+			},
+			"v_date_keep_from": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-03-06T13:44:50Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

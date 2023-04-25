@@ -1,0 +1,12 @@
+{
+	"name": "prod-SelfHostedIR-dmz-outbound-01",
+	"properties": {
+		"type": "SelfHosted",
+		"typeProperties": {
+			"linkedInfo": {
+				"resourceId": "/subscriptions/2583ad26-6738-4d23-94ec-18efe0209290/resourcegroups/ARTEMIS-RG01/providers/Microsoft.DataFactory/factories/df-artemis-prod/integrationruntimes/SelfHostedIR-dmz-outbound-01",
+				"authorizationType": "Rbac"
+			}
+		}
+	}
+}

@@ -1,0 +1,76 @@
+{
+	"name": "Artemis01_prod_DWH_ARCHIVE2BLOB_DBO_DW_FORECAST2BLOB",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Artemis01_prod_dwh_archive2blob",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "SOURCE_KEY_1",
+				"type": "varchar"
+			},
+			{
+				"name": "SOURCE_KEY_2",
+				"type": "varchar"
+			},
+			{
+				"name": "SOURCE_ORIGIN_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "UTC_MODEL_QUERY_DATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "UTC_MODEL_RUN_DATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "UTC_START_DATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "MODEL_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "DIM_DATA_TYPE_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "LOCATION_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "VALUE_ORIG",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "LOAD_ID",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "DW_FORECAST2BLOB"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

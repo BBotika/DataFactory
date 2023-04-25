@@ -1,0 +1,90 @@
+{
+	"name": "Artemis01_prod_DWH_DM_STAGING_AS_SCHEDULE2BLOB",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Artemis01_prod",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "ID",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "CREATED_AT",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "UPDATED_AT",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "SM_VERSION",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "MEK_VERSION",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "BUSINESS_DAY",
+				"type": "date"
+			},
+			{
+				"name": "INT_SCHED_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "INT_SCHED_SENDER",
+				"type": "varchar"
+			},
+			{
+				"name": "POD_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "POD_NAME",
+				"type": "varchar"
+			},
+			{
+				"name": "POD_SENDER",
+				"type": "varchar"
+			},
+			{
+				"name": "SCHEDULE_VALUE",
+				"type": "decimal",
+				"precision": 9,
+				"scale": 3
+			},
+			{
+				"name": "UTC_START_DATETIME",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "SCHEDULE_TYPE_ID",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "ID_DA_DICT_ID",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "DM",
+			"table": "STAGING_AS_SCHEDULE2BLOB"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,235 @@
+{
+	"name": "map_comdev_dtpp5m",
+	"properties": {
+		"folder": {
+			"name": "BERAGADT_FL"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ARTEMIS_DB__DBO__DATETIME_TABLE",
+						"type": "DatasetReference"
+					},
+					"name": "DATETIMETABLE"
+				},
+				{
+					"dataset": {
+						"referenceName": "REP_DB__ASZK_X__COMPOSITE_DEVICE_LIST",
+						"type": "DatasetReference"
+					},
+					"name": "COMPOSITEDEVICELIST"
+				},
+				{
+					"dataset": {
+						"referenceName": "REP_DB__ASZK_X__DEVICE_LIST",
+						"type": "DatasetReference"
+					},
+					"name": "DEVICELIST"
+				},
+				{
+					"dataset": {
+						"referenceName": "REP_DB__ASZK_X__DEVICE_LIST",
+						"type": "DatasetReference"
+					},
+					"name": "DEVICELIST2"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "TEST__ADF__DT_PP_5MIN",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "union1"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "join2"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "filter1"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     from_utc_datetime as timestamp (toTimestamp('2010-01-01','yyyy-MM-dd')),",
+				"     to_utc_datetime as timestamp (toTimestamp('9999-12-31','yyyy-MM-dd'))",
+				"}",
+				"source(output(",
+				"          UTC_DateTime as timestamp,",
+				"          Local_DateTime as timestamp,",
+				"          UTC_D_Flag as integer,",
+				"          Local_D_Flag as integer,",
+				"          H_Flag as integer,",
+				"          qH_Flag as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> DATETIMETABLE",
+				"source(output(",
+				"          OrigDevice_ID as integer,",
+				"          CompositeDevice_ID as integer,",
+				"          PP_RAW_Plant_ID as integer,",
+				"          PP_RAW_DEVMSRMNT_ID as integer,",
+				"          PP_RAW_FieldName_ID as string,",
+				"          Device_Name as string,",
+				"          KKS_ID as string,",
+				"          UOM_Orig_ID as integer,",
+				"          UOM_New_ID as integer,",
+				"          Sign_multip as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> COMPOSITEDEVICELIST",
+				"source(output(",
+				"          Device_ID as integer,",
+				"          PP_RAW_Plant_ID as integer,",
+				"          PP_RAW_DEVMSRMNT_ID as integer,",
+				"          PP_RAW_FieldName_ID as string,",
+				"          Device_Name as string,",
+				"          Device_Name_BI as string,",
+				"          KKS_ID as string,",
+				"          Equipment_ID as integer,",
+				"          DeviceType_ID as integer,",
+				"          Technology_ID as integer,",
+				"          Plant_ID as integer,",
+				"          DevLevel_ID as integer,",
+				"          UOM_Orig_ID as integer,",
+				"          UOM_New_ID as integer,",
+				"          Datapoint_ID as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> DEVICELIST",
+				"source(output(",
+				"          Device_ID as integer,",
+				"          PP_RAW_Plant_ID as integer,",
+				"          PP_RAW_DEVMSRMNT_ID as integer,",
+				"          PP_RAW_FieldName_ID as string,",
+				"          Device_Name as string,",
+				"          Device_Name_BI as string,",
+				"          KKS_ID as string,",
+				"          Equipment_ID as integer,",
+				"          DeviceType_ID as integer,",
+				"          Technology_ID as integer,",
+				"          Plant_ID as integer,",
+				"          DevLevel_ID as integer,",
+				"          UOM_Orig_ID as integer,",
+				"          UOM_New_ID as integer,",
+				"          Datapoint_ID as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> DEVICELIST2",
+				"join1 derive(PP_RAW_DEVMSRMNT_ID = COMPOSITEDEVICELIST@PP_RAW_DEVMSRMNT_ID,",
+				"          PP_RAW_Plant_ID = COMPOSITEDEVICELIST@PP_RAW_Plant_ID,",
+				"          PP_RAW_FieldName_ID = COMPOSITEDEVICELIST@PP_RAW_FieldName_ID,",
+				"          Device_ID = CompositeDevice_ID,",
+				"          PLANT_ID = Plant_ID,",
+				"          UOM_ORIG_ID = COMPOSITEDEVICELIST@UOM_Orig_ID,",
+				"          UOM_NEW_ID = COMPOSITEDEVICELIST@UOM_New_ID,",
+				"          EQUIPMENT_ID = Equipment_ID,",
+				"          COMPOSITE_FL = 1) ~> derivedColumn1",
+				"COMPOSITEDEVICELIST, DEVICELIST join(OrigDevice_ID == Device_ID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"select1, select2 union(byName: true)~> union1",
+				"DEVICELIST2 derive(COMPOSITE_FL = 0) ~> derivedColumn2",
+				"filter1, union1 join(1==1,",
+				"     joinType:'cross',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'off')~> join2",
+				"derivedColumn2 select(mapColumn(",
+				"          PP_RAW_DEVMSRMNT_ID,",
+				"          PP_RAW_PLANT_ID = PP_RAW_Plant_ID,",
+				"          PP_RAW_FIELDNAME_ID = PP_RAW_FieldName_ID,",
+				"          DEVICE_ID = Device_ID,",
+				"          PLANT_ID = Plant_ID,",
+				"          UOM_ORIG_ID = UOM_Orig_ID,",
+				"          UOM_NEW_ID = UOM_New_ID,",
+				"          EQUIPMENT_ID = Equipment_ID,",
+				"          COMPOSITE_FL",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"derivedColumn1 select(mapColumn(",
+				"          PP_RAW_DEVMSRMNT_ID,",
+				"          PP_RAW_PLANT_ID = PP_RAW_Plant_ID,",
+				"          PP_RAW_FIELDNAME_ID = PP_RAW_FieldName_ID,",
+				"          DEVICE_ID = CompositeDevice_ID,",
+				"          PLANT_ID = DEVICELIST@Plant_ID,",
+				"          UOM_ORIG_ID = COMPOSITEDEVICELIST@UOM_Orig_ID,",
+				"          UOM_NEW_ID = COMPOSITEDEVICELIST@UOM_New_ID,",
+				"          EQUIPMENT_ID = DEVICELIST@Equipment_ID,",
+				"          COMPOSITE_FL",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"DATETIMETABLE filter(between(UTC_DateTime, $from_utc_datetime, $to_utc_datetime)) ~> filter1",
+				"join2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          UTCStartDateTime as timestamp,",
+				"          PP_RAW_DEVMSRMNT_ID as integer,",
+				"          PP_RAW_Plant_ID as integer,",
+				"          PP_RAW_FieldName_ID as string,",
+				"          Device_ID as integer,",
+				"          Plant_ID as integer,",
+				"          UOM_Orig_ID as integer,",
+				"          UOM_New_ID as integer,",
+				"          Equipment_ID as integer,",
+				"          composite_flag as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          UTCStartDateTime = UTC_DateTime,",
+				"          PP_RAW_DEVMSRMNT_ID,",
+				"          PP_RAW_Plant_ID = PP_RAW_PLANT_ID,",
+				"          PP_RAW_FieldName_ID = PP_RAW_FIELDNAME_ID,",
+				"          Device_ID = DEVICE_ID,",
+				"          Plant_ID = PLANT_ID,",
+				"          UOM_Orig_ID = UOM_ORIG_ID,",
+				"          UOM_New_ID = UOM_NEW_ID,",
+				"          Equipment_ID = EQUIPMENT_ID,",
+				"          composite_flag = COMPOSITE_FL",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}

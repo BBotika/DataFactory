@@ -1,0 +1,965 @@
+{
+	"name": "pl_prod_ARTEMIS_DWH_OLD_TO_PARQUET",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup MIN From ARTEMIS_DWH_DBO_PP_RAW_2sec_arch",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Copy PP_RAW_2SEC_LIVE",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "SELECT MIN(UTCLogDateTime) as MIN FROM ARTEMIS_DWH_old.DBO.PP_RAW_2sec_arch",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "Artemis01_prod_DWH_PARAM_ARCHIVE_TO_PARQUET_PARAMS",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "Set MIN_UTCLOG",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Lookup MIN From ARTEMIS_DWH_DBO_PP_RAW_2sec_arch",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_min_utclog",
+					"value": {
+						"value": "@string(activity('Lookup MIN From ARTEMIS_DWH_DBO_PP_RAW_2sec_arch').output.firstRow.MIN)\n\n\n",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Lookup MAX From ARTEMIS_DWH_DBO_PP_RAW_2sec_arch",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Set MIN_UTCLOG",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"sqlReaderQuery": "SELECT MAX(UTCLogDateTime) as MA FROM ARTEMIS_DWH_old.DBO.PP_RAW_2sec_arch",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "Artemis01_prod_DWH_PARAM_ARCHIVE_TO_PARQUET_PARAMS",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "SET MAX_UTLOG",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Lookup MAX From ARTEMIS_DWH_DBO_PP_RAW_2sec_arch",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_max_utclog",
+					"value": {
+						"value": "@string(activity('Lookup MAX From ARTEMIS_DWH_DBO_PP_RAW_2sec_arch').output.firstrow.MA)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Copy PP_RAW_2SEC_ARCH",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "SET MAX_UTLOG",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "PLANT_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "PLANT_id",
+									"type": "Int16"
+								}
+							},
+							{
+								"source": {
+									"name": "DEVMSRMNT_id",
+									"type": "Int16"
+								},
+								"sink": {
+									"name": "DEVMSRMNT_id",
+									"type": "Int16"
+								}
+							},
+							{
+								"source": {
+									"name": "LocalLogDateTime",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "LocalLogDateTime",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"name": "UTCLogDateTime",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "UTCLogDateTime",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"name": "value01",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value01",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value02",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value02",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value03",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value03",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value04",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value04",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value05",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value05",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value06",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value06",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value07",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value07",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value08",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value08",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value09",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value09",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value10",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value10",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value11",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value11",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value12",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value12",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value13",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value13",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value14",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value14",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value15",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value15",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "value16",
+									"type": "Single"
+								},
+								"sink": {
+									"name": "value16",
+									"type": "Single"
+								}
+							},
+							{
+								"source": {
+									"name": "XRID",
+									"type": "Int32"
+								},
+								"sink": {
+									"name": "XRID",
+									"type": "Int32"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Artemis01_prod_ARTEMIS_DWH_old_DBO_PP_RAW_2SEC_ARCH",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "alteoarchivedev_ARTEMIS_DWH_DBO_PP_RAW_2SEC_ARCH_PARQUET",
+						"type": "DatasetReference",
+						"parameters": {
+							"v_min_log": "@formatDateTime(variables('v_min_utclog'), 'yyyyMMdd_HHmmss')",
+							"v_max_log": "@formatDateTime(variables('v_max_utclog'), 'yyyyMMdd_HHmmss')"
+						}
+					}
+				]
+			},
+			{
+				"name": "pl_Execution_Start",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Start",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "pl_Execution_Success",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy PP_RAW_2SEC_ARCH",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Success",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "pl_Execution_Failure",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "pl_Execution_Start",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Lookup MIN From ARTEMIS_DWH_DBO_PP_RAW_2sec_arch",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Set MIN_UTCLOG",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Lookup MAX From ARTEMIS_DWH_DBO_PP_RAW_2sec_arch",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "SET MAX_UTLOG",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Copy PP_RAW_2SEC_ARCH",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Copy PP_RAW_2SEC_LIVE",
+						"dependencyConditions": [
+							"Failed"
+						]
+					},
+					{
+						"activity": "Copy PP_RAW_LOG",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_Execution_Failure",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Copy PP_RAW_2SEC_LIVE",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Copy PP_RAW_LOG",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "PLANT_id",
+									"type": "Int16",
+									"physicalType": "smallint"
+								},
+								"sink": {
+									"name": "PLANT_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "DEVMSRMNT_id",
+									"type": "Int16",
+									"physicalType": "smallint"
+								},
+								"sink": {
+									"name": "DEVMSRMNT_id",
+									"type": "Int16",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "LocalLogDateTime",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								},
+								"sink": {
+									"name": "LocalLogDateTime",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "UTCLogDateTime",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								},
+								"sink": {
+									"name": "UTCLogDateTime",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "value01",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value01",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value02",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value02",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value03",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value03",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value04",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value04",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value05",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value05",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value06",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value06",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value07",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value07",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value08",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value08",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value09",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value09",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value10",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value10",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value11",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value11",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value12",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value12",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value13",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value13",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value14",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value14",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value15",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value15",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "value16",
+									"type": "Single",
+									"physicalType": "real"
+								},
+								"sink": {
+									"name": "value16",
+									"type": "Single",
+									"physicalType": "FLOAT"
+								}
+							},
+							{
+								"source": {
+									"name": "XRID",
+									"type": "Int32",
+									"physicalType": "int"
+								},
+								"sink": {
+									"name": "XRID",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Artemis01_prod_ARTEMIS_DWH_old_DBO_PP_RAW_2SEC_LIVE",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "alteoarchivedev_ARTEMIS_DWH_DBO_PP_RAW_2SEC_LIVE_PARQUET",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy PP_RAW_LOG",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "pl_Execution_Start",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlMISource",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "AUTO_id",
+									"type": "Int32",
+									"physicalType": "int"
+								},
+								"sink": {
+									"name": "AUTO_id",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "UTCLogDate",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								},
+								"sink": {
+									"name": "UTCLogDate",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "LogDate",
+									"type": "DateTime",
+									"physicalType": "datetime2"
+								},
+								"sink": {
+									"name": "LogDate",
+									"type": "DateTime",
+									"physicalType": "INT_96"
+								}
+							},
+							{
+								"source": {
+									"name": "shevent_message",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "shevent_message",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "shevent_varname",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "shevent_varname",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "shevent_val",
+									"type": "Double",
+									"physicalType": "float"
+								},
+								"sink": {
+									"name": "shevent_val",
+									"type": "Double",
+									"physicalType": "DOUBLE"
+								}
+							},
+							{
+								"source": {
+									"name": "shevent_terminal",
+									"type": "String",
+									"physicalType": "varchar"
+								},
+								"sink": {
+									"name": "shevent_terminal",
+									"type": "String",
+									"physicalType": "UTF8"
+								}
+							},
+							{
+								"source": {
+									"name": "shevent_priority",
+									"type": "Int32",
+									"physicalType": "int"
+								},
+								"sink": {
+									"name": "shevent_priority",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							},
+							{
+								"source": {
+									"name": "shevent_group",
+									"type": "Int32",
+									"physicalType": "int"
+								},
+								"sink": {
+									"name": "shevent_group",
+									"type": "Int32",
+									"physicalType": "INT_32"
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Artemis01_prod_ARTEMIS_DWH_old_DBO_PP_RAW_log",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "alteoarchivedev_ARTEMIS_DWH_DBO_PP_RAW_LOG_PARQUET",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"variables": {
+			"v_min_utclog": {
+				"type": "String"
+			},
+			"v_max_utclog": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-03-20T11:55:29Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

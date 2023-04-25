@@ -1,0 +1,22 @@
+{
+	"name": "alteoarchivedev_ARTEMIS_DWH_DBO_PP_RAW_2SEC_LIVE_PARQUET",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "alteoarchivedev",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "PP_RAW_2SEC_LIVE",
+				"folderPath": "ARTEMIS_DWH/DBO.PP_RAW_2sec_live",
+				"fileSystem": "databasearchives"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

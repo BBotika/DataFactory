@@ -1,0 +1,117 @@
+{
+	"name": "ARTEMIS_DB__DBO__PP_RAW_5MIN_AGGR",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "artemis_artemis_db_dev",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlMITable",
+		"schema": [
+			{
+				"name": "PLANT_id",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "DEVMSRMNT_id",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "UTCLogDateTime",
+				"type": "datetime2",
+				"scale": 2
+			},
+			{
+				"name": "value01",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value02",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value03",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value04",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value05",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value06",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value07",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value08",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value09",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value10",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value11",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value12",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value13",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value14",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value15",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "value16",
+				"type": "real",
+				"precision": 7
+			},
+			{
+				"name": "SP_debug",
+				"type": "varchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "PP_RAW_5min_aggr"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

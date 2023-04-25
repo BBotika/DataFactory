@@ -1,0 +1,30 @@
+{
+	"name": "alteoarchivedev_MEK_ARCHIVE_RAW_KAT_PROD_kW_ARCH_PARQUET",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "alteoarchivedev",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"bday": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat('RAW_KAT_PROD_kW_ARCH_',dataset().bday)",
+					"type": "Expression"
+				},
+				"folderPath": "MEK/ARCHIVE.RAW_KAT_PROD_kW_ARCH",
+				"fileSystem": "databasearchives"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

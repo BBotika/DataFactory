@@ -1,0 +1,23 @@
+{
+	"name": "Datalake_ShivaReal_Datalake_DB",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Data Source=192.168.7.67\\MSSQLSERVER,1433;Initial Catalog=ShivaReal-Datalake;User ID=datalakereader2",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "kv_artemis_prod_02",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "sql-server-datalake--datalakereader2"
+			}
+		},
+		"connectVia": {
+			"referenceName": "prod-SelfHostedIR-dmz-outbound-01",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

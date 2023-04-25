@@ -1,0 +1,170 @@
+{
+	"name": "map_dtpp5m_rapp5d",
+	"properties": {
+		"folder": {
+			"name": "BERAGADT_FL"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "TEST__ADF__DT_PP_5MIN",
+						"type": "DatasetReference"
+					},
+					"name": "DTPP5MIN"
+				},
+				{
+					"dataset": {
+						"referenceName": "ARTEMIS_DB__DBO__PP_RAW_5MIN_AGGR",
+						"type": "DatasetReference"
+					},
+					"name": "PPRAW5MINAGGR"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "TEST__ADF__RAW_PP_5MIN_DATA_KW",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "filter1"
+				},
+				{
+					"name": "join1"
+				},
+				{
+					"name": "filter2"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedNULLVALUE"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     from_utc_datetime as timestamp (toTimestamp('2010-01-01','yyyy-MM-dd')),",
+				"     to_utc_datetime as timestamp (toTimestamp('9999-12-31','yyyy-MM-dd'))",
+				"}",
+				"source(output(",
+				"          UTCStartDateTime as timestamp,",
+				"          PP_RAW_DEVMSRMNT_ID as integer,",
+				"          PP_RAW_Plant_ID as integer,",
+				"          PP_RAW_FieldName_ID as string,",
+				"          Device_ID as integer,",
+				"          Plant_ID as integer,",
+				"          UOM_Orig_ID as integer,",
+				"          UOM_New_ID as integer,",
+				"          Equipment_ID as integer,",
+				"          composite_flag as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> DTPP5MIN",
+				"source(output(",
+				"          PLANT_id as integer,",
+				"          DEVMSRMNT_id as integer,",
+				"          UTCLogDateTime as timestamp,",
+				"          value01 as float,",
+				"          value02 as float,",
+				"          value03 as float,",
+				"          value04 as float,",
+				"          value05 as float,",
+				"          value06 as float,",
+				"          value07 as float,",
+				"          value08 as float,",
+				"          value09 as float,",
+				"          value10 as float,",
+				"          value11 as float,",
+				"          value12 as float,",
+				"          value13 as float,",
+				"          value14 as float,",
+				"          value15 as float,",
+				"          value16 as float,",
+				"          SP_debug as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> PPRAW5MINAGGR",
+				"DTPP5MIN filter(!isNull(PP_RAW_DEVMSRMNT_ID) && !isNull(PP_RAW_Plant_ID)",
+				"&& between(UTCStartDateTime, $from_utc_datetime, $to_utc_datetime)) ~> filter1",
+				"filter1, filter2 join(PP_RAW_DEVMSRMNT_ID == DEVMSRMNT_id",
+				"     && UTCStartDateTime == UTCLogDateTime,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"PPRAW5MINAGGR filter(between(UTCLogDateTime, $from_utc_datetime, $to_utc_datetime)) ~> filter2",
+				"derivedNULLVALUE derive(CALC_MSRMNT_VALUE = iif(PP_RAW_FieldName_ID=='value01', value01, \r",
+				"    iif(PP_RAW_FieldName_ID=='value02',value02,\r",
+				"        iif(PP_RAW_FieldName_ID=='value03', value03,\r",
+				"            iif(PP_RAW_FieldName_ID=='value04', value04,\r",
+				"                iif(PP_RAW_FieldName_ID=='value05',value05,\r",
+				"                    iif(PP_RAW_FieldName_ID=='value06',value06,\r",
+				"                        iif(PP_RAW_FieldName_ID=='value07',value07,\r",
+				"                            iif(PP_RAW_FieldName_ID=='value08',value08,\r",
+				"                                iif(PP_RAW_FieldName_ID=='value09',value09,\r",
+				"                                    iif(PP_RAW_FieldName_ID=='value10',value10,\r",
+				"                                        iif(PP_RAW_FieldName_ID=='value11',value11,\r",
+				"                                            iif(PP_RAW_FieldName_ID=='value12',value12,\r",
+				"                                                iif(PP_RAW_FieldName_ID=='value13',value13,\r",
+				"                                                    iif(PP_RAW_FieldName_ID=='value14',value14,\r",
+				"                                                        iif(PP_RAW_FieldName_ID=='value15',value15,\r",
+				"                                                            iif(PP_RAW_FieldName_ID=='value16',value16, NULL_VALUED_COLUMN)\r",
+				"                                                        )\r",
+				"                                                    )\r",
+				"                                                )\r",
+				"                                            )\r",
+				"                                        )\r",
+				"                                    )\r",
+				"                                )\r",
+				"                            )\r",
+				"                        )\r",
+				"                    )\r",
+				"                )\r",
+				"            )\r",
+				"        )\r",
+				"    )\r",
+				")) ~> derivedColumn1",
+				"join1 derive(NULL_VALUED_COLUMN = toFloat(null())) ~> derivedNULLVALUE",
+				"derivedColumn1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          UTCStartDateTime as timestamp,",
+				"          Device_ID as integer,",
+				"          Plant_ID as integer,",
+				"          MSRMNT_Value as float,",
+				"          UOM_Orig_ID as integer,",
+				"          UOM_New_ID as integer,",
+				"          Equipment_ID as integer,",
+				"          composite_flag as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          UTCStartDateTime,",
+				"          Device_ID,",
+				"          Plant_ID = DTPP5MIN@Plant_ID,",
+				"          MSRMNT_Value = CALC_MSRMNT_VALUE,",
+				"          UOM_Orig_ID,",
+				"          Equipment_ID,",
+				"          composite_flag",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}
