@@ -1,0 +1,12 @@
+{
+	"name": "AzureSynapseArtifacts1",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSynapseArtifacts",
+		"typeProperties": {
+			"endpoint": "https://powerbianalytics.dev.azuresynapse.net",
+			"authentication": "MSI",
+			"workspaceResourceId": "/subscriptions/2583ad26-6738-4d23-94ec-18efe0209290/resourceGroups/ARTEMIS-RG01/providers/Microsoft.Synapse/workspaces/powerbianalytics"
+		}
+	}
+}
