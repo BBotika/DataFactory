@@ -7,7 +7,7 @@
 		"typeProperties": {
 			"functionAppUrl": "https://prm-prod-power-bi-partition-generate.azurewebsites.net",
 			"authentication": "Anonymous",
-			"encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIkRBVEFGQUNUT1JZQDc2RDNDQ0MwLTU5RjktNDhDRC04QzE1LTVCQ0Y5MTYzRDNDQV85NWQ4M2VlZi0yM2Y1LTQ5NTgtYmE2OC02NjMwYTlmODkxZDYiDQp9"
+			"encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIkRBVEFGQUNUT1JZQDc2RDNDQ0MwLTU5RjktNDhDRC04QzE1LTVCQ0Y5MTYzRDNDQV83ODdmNmUyNy0zYzhjLTQxM2YtYjQ0Ni03OGZmMzAyYzI3ZTAiDQp9"
 		}
 	}
 }
